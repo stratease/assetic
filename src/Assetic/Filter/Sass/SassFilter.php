@@ -160,12 +160,11 @@ class SassFilter extends BaseProcessFilter implements DependencyExtractorInterfa
         }
 
         // input
-        $pb->add($input = tempnam(sys_get_temp_dir(), 'assetic_sass'));
-        file_put_contents($input, $asset->getContent());
+        $source = $asset->getSourceDirectory().'/'.$asset->getSourcePath();
+        $pb->add($source);
 
         $proc = $pb->getProcess();
         $code = $proc->run();
-        unlink($input);
 
         if (0 !== $code) {
             throw FilterException::fromProcess($proc)->setInput($asset->getContent());
