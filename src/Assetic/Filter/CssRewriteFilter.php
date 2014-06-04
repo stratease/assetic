@@ -29,15 +29,16 @@ class CssRewriteFilter extends BaseCssFilter
         $sourceBase = $asset->getSourceRoot();
         $sourcePath = $asset->getSourcePath();
         $targetPath = $asset->getTargetPath();
-echo "\n".__LINE__.' '.__METHOD__." ".$sourceBase;
-        echo "\n".__LINE__.' '.__METHOD__." ".$sourcePath;
-        echo "\n".__LINE__.' '.__METHOD__." ".$targetPath;
+
+        // sometimes target path is an absolute path, which is incorrect for the parsing algorithm!
+        $targetPath = str_replace(realpath($sourceBase), '', $targetPath);
+
         if (null === $sourcePath || null === $targetPath || $sourcePath == $targetPath) {
             return;
         }
 
         // learn how to get from the target back to the source
-        if (false !== strpos($sourceBase, '://')) {echo "\n".__LINE__.' '.__METHOD__." ";
+        if (false !== strpos($sourceBase, '://')) {
             list($scheme, $url) = explode('://', $sourceBase.'/'.$sourcePath, 2);
             list($host, $path) = explode('/', $url, 2);
 
@@ -49,14 +50,11 @@ echo "\n".__LINE__.' '.__METHOD__." ".$sourceBase;
             $host = '';
 
             // pop entries off the target until it fits in the source
-            if ('.' == dirname($sourcePath)) {echo "\n".__LINE__.' '.__METHOD__." ";
+            if ('.' == dirname($sourcePath)) {
                 $path = str_repeat('../', substr_count($targetPath, '/'));
-            } elseif ('.' == $targetDir = dirname($targetPath)) {echo "\n".__LINE__.' '.__METHOD__." ";
+            } elseif ('.' == $targetDir = dirname($targetPath)) {
                 $path = dirname($sourcePath).'/';
-            } else {echo "\n".__LINE__.' '.__METHOD__." ";$targetDir = str_replace(realpath($sourceBase), '', realpath($targetDir)); // trying to fix targetDir!!!!!
-                echo "\n".__LINE__.' '.__METHOD__." ".$targetDir;
-                echo "\n".__LINE__.' '.__METHOD__." ".realpath($sourceBase);
-                echo "\n".__LINE__.' '.__METHOD__." ".realpath($targetDir);
+            } else {
                 $path = '';
                 while (0 !== strpos($sourcePath, $targetDir)) {
                     if (false !== $pos = strrpos($targetDir, '/')) {
@@ -67,13 +65,15 @@ echo "\n".__LINE__.' '.__METHOD__." ".$sourceBase;
                         $path .= '../';
                         break;
                     }
-                    echo "\n".__LINE__.' '.__METHOD__." ".$sourcePath;
-                    echo "\n".__LINE__.' '.__METHOD__." ".$targetDir;
+
+                    if($targetDir == false) {
+                        break;
+                    }
                 }
                 $path .= ltrim(substr(dirname($sourcePath).'/', strlen($targetDir)), '/');
             }
         }
-var_dump($path);
+
         $content = $this->filterReferences($asset->getContent(), function($matches) use ($host, $path) {
             if (false !== strpos($matches['url'], '://') || 0 === strpos($matches['url'], '//') || 0 === strpos($matches['url'], 'data:')) {
                 // absolute or protocol-relative or data uri
@@ -87,7 +87,7 @@ var_dump($path);
 
             // document relative
             $url = $matches['url'];
-            print_r($matches);
+
             while (0 === strpos($url, '../') && 2 <= substr_count($path, '/')) {
                 $path = substr($path, 0, strrpos(rtrim($path, '/'), '/') + 1);
                 $url = substr($url, 3);
@@ -101,12 +101,10 @@ var_dump($path);
                     $parts[] = $part;
                 }
             }
-            echo "\n".$host;
-            echo "\n".$path;
-print_r($parts);exit;
+
             return str_replace($matches['url'], implode('/', $parts), $matches[0]);
         });
-echo "\n".$targetPath."\n".'<pre>'.$content;
+
         $asset->setContent($content);
     }
 }
