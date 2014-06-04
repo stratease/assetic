@@ -57,16 +57,15 @@ class CssRewriteFilter extends BaseCssFilter
             } else {
                 $path = '';
                 while (0 !== strpos($sourcePath, $targetDir)) {
+                    // step down asset path
+                    $path .= '../';
                     if (false !== $pos = strrpos($targetDir, '/')) {
-                        $targetDir = substr($targetDir, 0, $pos);
-                        $path .= '../';
+                        // stop iterating if we are at the end of the targetdir
+                        if(false == ($targetDir = substr($targetDir, 0, $pos))) {
+                            break;
+                        }
                     } else {
                         $targetDir = '';
-                        $path .= '../';
-                        break;
-                    }
-
-                    if($targetDir == false) {
                         break;
                     }
                 }
