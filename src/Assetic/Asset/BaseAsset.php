@@ -140,12 +140,12 @@ abstract class BaseAsset implements AssetInterface
     }
 
     public function getTargetPath()
-    {
+    {echo "\n".__LINE__.' '.__METHOD__." ".$this->targetPath;
         return $this->targetPath;
     }
 
     public function setTargetPath($targetPath)
-    {
+    {echo "\n".__LINE__.' '.__METHOD__." ".$targetPath;
         if ($this->vars) {
             foreach ($this->vars as $var) {
                 if (false === strpos($targetPath, $var)) {
